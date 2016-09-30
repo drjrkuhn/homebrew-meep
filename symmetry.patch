@@ -1,0 +1,13 @@
+diff --git a/tests/symmetry.cpp b/tests/symmetry.cpp
+index 004f891..73293da 100644
+--- a/tests/symmetry.cpp
++++ b/tests/symmetry.cpp
+@@ -42,7 +42,7 @@ double rods_2d(const vec &pp) {
+ static double eps_compare = 1e-3;
+ static double thresh_compare = 1e-3;
+ #else
+-static double eps_compare = 1e-9;
++static double eps_compare = 2e-9;
+ static double thresh_compare = 1e-8;
+ #endif
+ 
