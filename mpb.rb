@@ -20,10 +20,13 @@ class Mpb < Formula
   fftw_args << "with-mpi" if build.with? "mpi"
   fftw_args << "with-openmp" if build.with? "openmp"
   
+  hdf5_args = []
+  hdf5_args << "with-mpi" if build.with? "mpi"
+  
   depends_on :fortran
   depends_on "fftw" => fftw_args
   depends_on "libctl"
-  depends_on "hdf5"
+  depends_on "hdf5" => hdf5_args
   depends_on "openblas" => :optional
   depends_on "openmpi" => :optional
   needs :openmp if build.with? "openmp"
