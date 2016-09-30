@@ -39,6 +39,7 @@ class Harminv < Formula
   end
 
   test do
-   system "make", "check"
+    # make check above
+    system "false"
   end
 end
