@@ -11,11 +11,12 @@ $ brew install meep
 
 This `meep` formula should automatically install all of its dependencies. Optionally, you may install libctl, harminv, and mpb seperately.
 
-To see what installation options are available, use:
+The installation of meep may take some time because it runs all of the tests (including a patched symmetry test). To disable the tests, use `brew install --without-check meep`.
+
+To see what other installation options are available, use:
 
 ```bash
 $ brew tap drjrkuhn/homebrew-meep
-$ brew options libctl
 $ brew options harminv
 $ brew options mpb
 $ brew options meep
