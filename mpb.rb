@@ -16,15 +16,17 @@ class Mpb < Formula
   option "with-inv-symmetry", "take advantage of (and require) inv. sym."
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
-  fftw_args = []
-  fftw_args << "with-mpi" if build.with? "mpi"
-  fftw_args << "with-openmp" if build.with? "openmp"
-  
   hdf5_args = []
   hdf5_args << "with-mpi" if build.with? "mpi"
   
   depends_on :fortran
-  depends_on "fftw" => fftw_args
+  if builds.with? "openmp"
+    # fftw is bundled with mpi by default but needs to be recompiled (slow) if openmp is used
+    depends_on "fftw" => ["with-mpi" "with-openmp"]
+  else
+    # use the default precompiled bundle
+    depends_on "fftw"
+  end
   depends_on "libctl"
   depends_on "hdf5" => hdf5_args
   depends_on "openblas" => :optional
