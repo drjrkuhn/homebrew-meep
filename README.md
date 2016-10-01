@@ -24,4 +24,4 @@ $ brew options mpb
 $ brew options meep
 ```
 
-> NOTE: The [github repository for meep](https://github.com/stevengj/meep) does not work yet. The meep formula relies on the tagged version available from the [Meep download site](http://ab-initio.mit.edu/wiki/index.php/Meep_download). Similarly, `mpb` clones its version from the ab-initio [`mpb` download site](http://ab-initio.mit.edu/wiki/index.php/MIT_Photonic_Bands#MPB_download). The tagged `harminv` is cloned directly from github 
+> NOTE: The [github repository for meep](https://github.com/stevengj/meep) does not build yet. The current meep formula relies on the tagged version available from the [Meep download site](http://ab-initio.mit.edu/wiki/index.php/Meep_download). Similarly, `mpb` clones its version from the ab-initio [`mpb` download site](http://ab-initio.mit.edu/wiki/index.php/MIT_Photonic_Bands#MPB_download). The tagged `harminv` is cloned directly from github 
