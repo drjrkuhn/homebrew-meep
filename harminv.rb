@@ -8,6 +8,10 @@ class Harminv < Formula
   sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
   head "https://github.com/stevengj/harminv.git"
 
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "gettext" => :build
+
   option "without-check", "Disable build-time checking (not recommended)"
   depends_on :fortran
   depends_on "openblas" => :optional
@@ -19,13 +23,17 @@ class Harminv < Formula
         "--disable-silent-rules",
         "--prefix=#{prefix}"
       ]
-    
+  
+    # openblas is keg-only. We need to link to it if installed  
     if build.with? "openblas"
       conf_args << "--with-blas=#{Formula["openblas"].opt_prefix}"
       conf_args << "--with-lapack=#{Formula["openblas"].opt_prefix}"
     elsif OS.mac?
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
+    
+    ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
+    ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
     
     # generate configure
     system "./autogen.sh"

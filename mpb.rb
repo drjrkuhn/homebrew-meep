@@ -8,6 +8,10 @@ class Mpb < Formula
   sha256 "3deafe79185eb9eb8a8fe97d9fe51624221f51c1cf4baff4b4a7242c51130bd7"
   head "https://github.com/stevengj/mpb"
 
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "gettext" => :build
+
   depends_on :mpi => [:cc, :recommended]
 
   option "without-check", "Disable build-time checking (not recommended)"
@@ -16,13 +20,15 @@ class Mpb < Formula
   option "with-inv-symmetry", "take advantage of (and require) inv. sym."
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
-  hdf5_args = []
-  hdf5_args << "with-mpi" if build.with? "mpi"
-  
   depends_on :fortran
-  depends_on "fftw" => ["with-mpi" "with-openmp"]
+  if build.with? "openmp"
+    # fftw needs to be recompiled with openmp if mpb requests openmp
+    depends_on "fftw" => ["with-mpi" "with-openmp"]
+  else
+    depends_on "fftw"
+  end
   depends_on "libctl"
-  depends_on "hdf5" => hdf5_args
+  depends_on "hdf5"
   depends_on "openblas" => :optional
   depends_on "openmpi" => :optional
   needs :openmp if build.with? "openmp"
@@ -33,9 +39,12 @@ class Mpb < Formula
         "--disable-dependency-tracking",
         "--disable-silent-rules",
         "--prefix=#{prefix}",
-        "--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
+        #"--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
+        "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
       ]
     
+    
+    # openblas is keg-only. We need to link to it if installed  
     if build.with? "openblas"
       conf_args << "--with-blas=#{Formula["openblas"].opt_prefix}"
       conf_args << "--with-lapack=#{Formula["openblas"].opt_prefix}"
@@ -48,9 +57,8 @@ class Mpb < Formula
     conf_args << "--with-inv-symmetry" if build.with? "inv-symmetry"
     conf_args << "--with-hermitian-eps" if build.with? "hermitian-eps"
         
-    
-    ENV.append "CPPFLAGS", "-I#{Formula["fftw"].include} -I#{Formula["libctl"].include}"
-    ENV.append "LDFLAGS",  "-L#{Formula["fftw"].lib} -L#{Formula["libctl"].lib}"
+    ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
+    ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
     
     system "autoreconf", "-fiv"
     system "./configure", *conf_args
@@ -58,6 +66,7 @@ class Mpb < Formula
     system "make"
     system "make", "check" if build.with? "check"
     system "make", "install" # if this fails, try separate make/make install steps
+    bin.install_symlink "mpb-mpi" => "mpb" if build.with? "mpi"
   end
 
   test do

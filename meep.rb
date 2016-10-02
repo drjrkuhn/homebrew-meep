@@ -5,8 +5,7 @@ class Meep < Formula
   url "http://ab-initio.mit.edu/meep/meep-1.3.tar.gz"
   version "1.3"
   sha256 "564c1ff1b413a3487cf81048a45deabfdac4243a1a37ce743f4fcf0c055fd438"
-  ## the github meep-1.3 tag does not work yet
-  ## head "https://github.com/stevengj/meep"
+  head "https://github.com/stevengj/meep.git"
   
   # fix symmetry test failure on macOS by changing eps_compare from 1e-9 to 2e-9
   stable do
@@ -16,6 +15,9 @@ class Meep < Formula
     end
   end
   
+  fails_with :clang do
+    cause "The only supported compiler is GCC(>=4.7)."
+  end
 
   depends_on :mpi => [:cc, :recommended]
 
@@ -42,7 +44,8 @@ class Meep < Formula
         "--disable-silent-rules",
         "--with-gcc-arch=native",
         "--prefix=#{prefix}",
-        "--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
+        #"--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
+        "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
       ]
     
     if build.with? "openblas"
@@ -55,22 +58,31 @@ class Meep < Formula
     conf_args << "--with-mpi" if build.with? "mpi"
     
     ## arguments for testing    
-    # export CPPFLAGS="-I/usr/local/opt/fftw/include -I/usr/local/opt/libctl/include -I/usr/local/opt/gsl/include -I/usr/local/opt/hdf5/include -I/usr/local/opt/harminv/include"
-    # export LDFLAGS="-L/usr/local/opt/fftw/lib -L/usr/local/opt/libctl/lib -L/usr/local/opt/gsl/lib -L/usr/local/opt/hdf5/lib -L/usr/local/opt/harminv/lib"
+    #
+    # export CC=/usr/local/bin/gcc-6 CXX=/usr/local/bin/g++-6 CPP=/usr/local/bin/cpp-6 LD=/usr/local/bin/gcc-6 F77=/usr/local/bin/gfortran-6
+
+    #
+    # export CPPFLAGS="-I/usr/local/include"
+    # export LDFLAGS="-L/usr/local/lib"
+    # export CXX="/usr/local/bin/gcc-6"
+    # export MPICXX="/usr/local/bin/gcc-6"
+    # export CC="/usr/local/bin/gcc-6"
     # ./configure --with-libctl=/usr/local/opt/libctl/share/libctl --with-gcc-arch=native
 
-    # Add all libraries
-    %w[fftw libctl gsl hdf5 fftw harminv].each do |f|
-      ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
-      ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
+    ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
+    ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
+            
+    if build.head?
+      system "./autogen.sh"
+    else
+      system "autoreconf", "-fiv"
+      system "./configure", *conf_args
     end
-        
-    system "autoreconf", "-fiv"
-    system "./configure", *conf_args
   
     system "make"
     system "make", "check" if build.with? "check"
     system "make", "install" # if this fails, try separate make/make install steps
+    bin.install_symlink "meep-mpi" => "meep" if build.with? "mpi"
   end
 
   test do
