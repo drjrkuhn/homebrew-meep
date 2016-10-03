@@ -8,11 +8,18 @@ class Harminv < Formula
   sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
   head "https://github.com/stevengj/harminv.git"
 
-  depends_on "autoconf" => :build
-  depends_on "automake" => :build
-  depends_on "gettext" => :build
+  fails_with :clang do
+    cause "The only supported compiler is GCC(>=4.7)."
+  end
+
 
   option "without-check", "Disable build-time checking (not recommended)"
+
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "gettext" => :build
+
   depends_on :fortran
   depends_on "openblas" => :optional
   

@@ -19,15 +19,20 @@ class Meep < Formula
     cause "The only supported compiler is GCC(>=4.7)."
   end
 
-  depends_on :mpi => [:cc, :recommended]
+  depends_on :fortran
+  depends_on :mpi => [:cc, :optional]
+
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "gettext" => :build
 
   option "without-check", "Disable build-time checking (not recommended)"
-  option "without-mpi", "Disable MPI parallel transforms (not recommended)" 
+  #option "without-mpi", "Disable MPI parallel transforms (not recommended)" 
   
   mpi_args = [:recommended]
   mpi_args << "with-mpi" if build.with? "mpi"
   
-  depends_on :fortran
   depends_on "h5utils" => :recommended
   depends_on "swig"
   depends_on "gsl"

@@ -8,19 +8,23 @@ class Mpb < Formula
   sha256 "3deafe79185eb9eb8a8fe97d9fe51624221f51c1cf4baff4b4a7242c51130bd7"
   head "https://github.com/stevengj/mpb"
 
+  fails_with :clang do
+    cause "The only supported compiler is GCC(>=4.7)."
+  end
+
+  depends_on :fortran
+  depends_on :mpi => [:cc, :optional]
+
   depends_on "autoconf" => :build
   depends_on "automake" => :build
+  depends_on "libtool" => :build
   depends_on "gettext" => :build
 
-  depends_on :mpi => [:cc, :recommended]
-
   option "without-check", "Disable build-time checking (not recommended)"
-  option "without-mpi", "Disable MPI parallel transforms (not recommended)" 
   option "with-openmp", "Enable OpenMP parallel transforms"
   option "with-inv-symmetry", "take advantage of (and require) inv. sym."
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
-  depends_on :fortran
   if build.with? "openmp"
     # fftw needs to be recompiled with openmp if mpb requests openmp
     depends_on "fftw" => ["with-mpi" "with-openmp"]
