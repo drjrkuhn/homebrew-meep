@@ -6,14 +6,10 @@ class Mpb < Formula
   url "http://ab-initio.mit.edu/mpb/mpb-1.5.tar.gz"
   version "1.5"
   sha256 "3deafe79185eb9eb8a8fe97d9fe51624221f51c1cf4baff4b4a7242c51130bd7"
-  head "https://github.com/stevengj/mpb"
-
-  fails_with :clang do
-    cause "The only supported compiler is GCC(>=4.7)."
-  end
+  head "https://github.com/stevengj/mpb.git"
 
   depends_on :fortran
-  depends_on :mpi => [:cc, :optional]
+  depends_on :mpi => [:cc, :recommended]
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
@@ -21,32 +17,35 @@ class Mpb < Formula
   depends_on "gettext" => :build
 
   option "without-check", "Disable build-time checking (not recommended)"
-  option "with-openmp", "Enable OpenMP parallel transforms"
+
   option "with-inv-symmetry", "take advantage of (and require) inv. sym."
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
-  if build.with? "openmp"
-    # fftw needs to be recompiled with openmp if mpb requests openmp
-    depends_on "fftw" => ["with-mpi" "with-openmp"]
-  else
-    depends_on "fftw"
-  end
-  depends_on "libctl"
+  depends_on "fftw"
+  depends_on "libctl" => :recommended
   depends_on "hdf5"
   depends_on "openblas" => :optional
-  depends_on "openmpi" => :optional
-  needs :openmp if build.with? "openmp"
 
   def install
+
+    # homebrew standard libraries        
+    ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
+    ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
+
+    ## Position Independent Code, needed on 64-bit
+    ENV.append "CXXLAGS", " -fPIC -Wno-mismatched-tags"
+    ENV.append "CFLAGS", " -fPIC"
+    ENV.append "FFLAGS", " -fPIC"
+
     conf_args = [
         "--enable-maintainer-mode",
         "--disable-dependency-tracking",
         "--disable-silent-rules",
+        "--enable-shared",
         "--prefix=#{prefix}",
-        #"--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
-        "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
       ]
-    
+    conf_args << "--with-inv-symmetry" if build.with? "inv-symmetry"
+    conf_args << "--with-hermitian-eps" if build.with? "hermitian-eps"
     
     # openblas is keg-only. We need to link to it if installed  
     if build.with? "openblas"
@@ -56,20 +55,27 @@ class Mpb < Formula
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
     
-    conf_args << "--with-mpi" if build.with? "mpi"
-    conf_args << "--with-openmp" if build.with? "openmp"
-    conf_args << "--with-inv-symmetry" if build.with? "inv-symmetry"
-    conf_args << "--with-hermitian-eps" if build.with? "hermitian-eps"
-        
-    ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
-    ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
+    if build.with? "libctl"    
+      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
+    else
+      conf_args << "--without-libctl"
+    end
     
-    system "autoreconf", "-fiv"
+    if build.with? "mpi"
+      conf_args << "--with-mpi" if build.with? "mpi"
+      ENV.append "LDFLAGS", " -lmpi"
+    end
+    
+    if build.head?
+      system "./autogen.sh"
+    else
+      system "autoreconf", "-fiv"
+    end
     system "./configure", *conf_args
   
     system "make"
-    system "make", "check" if build.with? "check"
     system "make", "install" # if this fails, try separate make/make install steps
+    system "make", "check" if build.with? "check"
     bin.install_symlink "mpb-mpi" => "mpb" if build.with? "mpi"
   end
 

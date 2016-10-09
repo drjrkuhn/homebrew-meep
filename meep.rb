@@ -1,27 +1,13 @@
 class Meep < Formula
   desc "Meep (or MEEP) is a free finite-difference time-domain (FDTD) simulation software package developed at MIT to model electromagnetic systems."
   homepage "http://ab-initio.mit.edu/meep/"
-  # use the current downloaded version from mit, not github
-  url "http://ab-initio.mit.edu/meep/meep-1.3.tar.gz"
+  url "https://github.com/stevengj/meep/archive/1.3.tar.gz"
   version "1.3"
-  sha256 "564c1ff1b413a3487cf81048a45deabfdac4243a1a37ce743f4fcf0c055fd438"
-  #head "https://github.com/FilipDominec/meep.git" 
+  sha256 "562e070a60ca1a0cf0a1e89c07ad2ca40e21b14a7f4ac9c5b7b5e0100cbda714"
   head "https://github.com/stevengj/meep.git"
   
-  # fix symmetry test failure on macOS by changing eps_compare from 1e-9 to 2e-9
-  stable do
-    patch do
-      url "https://raw.githubusercontent.com/drjrkuhn/homebrew-meep/master/symmetry.diff"
-      sha256 "f718011c7c215067759e5bd1ede782610a3b7e4c66d54faf93ec0a8a9ce0fd1d"
-    end
-  end
-  
-  fails_with :clang do
-    cause "The only supported compiler is GCC(>=4.7)."
-  end
-
   depends_on :fortran
-  depends_on :mpi => [:cc, :optional]
+  depends_on :mpi => [:cc, :recommended]
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
@@ -30,8 +16,7 @@ class Meep < Formula
   depends_on "gnu-sed" => :build
 
   option "without-check", "Disable build-time checking (not recommended)"
-  option "without-libctl", "Disable guile integration through libctl"
-  #option "without-mpi", "Disable MPI parallel transforms (not recommended)" 
+  option "without-verbose-check", "Disable verbose build-time checking (not recommended)"
   
   mpi_args = [:recommended]
   mpi_args << "with-mpi" if build.with? "mpi"
@@ -42,18 +27,33 @@ class Meep < Formula
   depends_on "hdf5" => mpi_args
   depends_on "fftw" => mpi_args
   depends_on "harminv"
-  depends_on "libctl"
+  depends_on "libctl" => :recommended
+  depends_on "mpb"
   depends_on "openblas" => :optional
 
   def install
+    # homebrew standard libraries        
+    ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
+    ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
+
+    ## Position Independent Code, needed on 64-bit
+    ENV.append "CXXLAGS", " -fPIC -Wno-mismatched-tags"
+    ENV.append "CFLAGS", " -fPIC"
+    ENV.append "FFLAGS", " -fPIC"
+
+    # default OSX BSD sed does not work. Need to use gnu-sed during make
+    inreplace "libctl/Makefile.am", "sed", "gsed"
+    inreplace "src/Makefile.am", "sed", "gsed"
+    
+    # fix symmetry test error by increasing epsilon slightly
+    inreplace "tests/symmetry.cpp", "eps_compare = 1e-9;", "eps_compare = 3e-9;"
+
     conf_args = [
         "--enable-maintainer-mode",
+        "--disable-dependency-tracking",
+        "--disable-silent-rules",
         "--enable-shared",
-        #"--disable-dependency-tracking",
-        #"--disable-silent-rules",
-        #"--with-gcc-arch=native",
-        "--prefix=#{prefix}",
-        #"--with-libctl=#{Formula["libctl"].opt_prefix}/share/libctl"
+        "--prefix=#{prefix}"
       ]
     
     if build.with? "openblas"
@@ -63,49 +63,33 @@ class Meep < Formula
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
 
-#    if build.with? "libctl"    
-#      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
-#    else
-#      conf_args << "--without-libctl"
-#    end
+    if build.with? "libctl"    
+      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
+    else
+      conf_args << "--without-libctl"
+    end
     
-    conf_args << "--with-mpi" if build.with? "mpi"
+    if build.with? "mpi"
+      conf_args << "--with-mpi" if build.with? "mpi"
+      ENV.append "LDFLAGS", " -lmpi"
+    end
     
-    ## arguments for testing    
-    #
-    # export CC=/usr/local/bin/gcc-6 CXX=/usr/local/bin/g++-6 CPP=/usr/local/bin/cpp-6 LD=/usr/local/bin/gcc-6 F77=/usr/local/bin/gfortran-6
-
-    # export CPPFLAGS="-I/usr/local/include"
-    # export LDFLAGS="-L/usr/local/lib"
-    # export CXX="/usr/local/bin/gcc-6"
-    # export MPICXX="/usr/local/bin/gcc-6"
-    # export CC="/usr/local/bin/gcc-6"
-    # ./configure --with-libctl=/usr/local/opt/libctl/share/libctl --with-gcc-arch=native
-
-    ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
-    ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
-    ENV["sed"] = "#{HOMEBREW_PREFIX}/bin/gsed"
-    ## Position Independent Code, needed on 64-bit
-    ENV.append "CXXLAGS", " -fPIC -Wno-mismatched-tags"
-    ENV.append "CFLAGS", " -fPIC"
-    ENV.append "FFLAGS", " -fPIC"
-    
-
-    #ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
-    #ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
-            
-#     if build.head?
-#       system "./autogen.sh", *conf_args
-#     else
-       system "./autogen.sh"
-       system "./configure", *conf_args
-#       system "autoreconf", "-fiv"
-#       system "./configure", *conf_args
-#     end
+    if build.head?
+      system "./autogen.sh"
+    else
+      system "autoreconf", "-fiv"
+    end
+    system "./configure", *conf_args
   
     system "make"
-    system "make", "check" if build.with? "check"
     system "make", "install" # if this fails, try separate make/make install steps
+    if build.with? "check"
+      ohai "Testing Meep. This could take several minutes."
+      ohai "Install using --without-check to skip tests."
+      ENV["VERBOSE"] = "true" if build.with? "verbose-check"
+      system "make", "check"
+      ohai "Testing done."
+    end
     bin.install_symlink "meep-mpi" => "meep" if build.with? "mpi"
   end
 

@@ -1,17 +1,17 @@
 require 'formula'
 
 class Harminv < Formula
-  desc "Harminv solves the problem of harmonic inversion "
+  desc "Harminv solves the problem of harmonic inversion."
   homepage "http://ab-initio.mit.edu/wiki/index.php/Harminv"
   url "https://github.com/stevengj/harminv/archive/1.4.tar.gz"
   version "1.4"
   sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
   head "https://github.com/stevengj/harminv.git"
 
-  fails_with :clang do
-    cause "The only supported compiler is GCC(>=4.7)."
-  end
-
+#  fails_with :clang
+#  fails_with :gcc => "4.6" do
+#    cause "The only supported compiler is GCC(>=4.7)."
+#  end
 
   option "without-check", "Disable build-time checking (not recommended)"
 
@@ -28,6 +28,7 @@ class Harminv < Formula
         "--enable-maintainer-mode",
         "--disable-dependency-tracking",
         "--disable-silent-rules",
+        "--enable-shared",
         "--prefix=#{prefix}"
       ]
   
@@ -39,15 +40,16 @@ class Harminv < Formula
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
     
-    ENV.append "CPPFLAGS", "-I#{HOMEBREW_PREFIX}/include"
-    ENV.append "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
-    
-    # generate configure
-    system "./autogen.sh"
-    
-    # Remove unrecognized options if warned by configure
+    ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
+    ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
+
+    if build.head?
+      system "./autogen.sh"
+    else
+      system "autoreconf", "-fiv"
+    end
     system "./configure", *conf_args
-    
+
     system "make"
     system "make", "check" if build.with? "check"
     system "make", "install" # if this fails, try separate make/make install steps
