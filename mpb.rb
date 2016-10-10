@@ -8,6 +8,11 @@ class Mpb < Formula
   sha256 "3deafe79185eb9eb8a8fe97d9fe51624221f51c1cf4baff4b4a7242c51130bd7"
   head "https://github.com/stevengj/mpb.git"
 
+  fails_with :clang
+  fails_with :gcc => "4.6" do
+    cause "The only supported compiler is GCC(>=4.7)."
+  end
+
   depends_on :fortran
   depends_on :mpi => [:cc, :recommended]
 
@@ -22,7 +27,7 @@ class Mpb < Formula
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
   depends_on "fftw"
-  depends_on "libctl" => :recommended
+  depends_on "libctl-meep" => :recommended
   depends_on "hdf5"
   depends_on "openblas" => :optional
 
@@ -55,8 +60,8 @@ class Mpb < Formula
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
     
-    if build.with? "libctl"    
-      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
+    if build.with? "libctl-meep"    
+      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl-meep"
     else
       conf_args << "--without-libctl"
     end

@@ -1,12 +1,14 @@
-require 'formula'
+# Documentation: https://github.com/Homebrew/brew/blob/master/docs/Formula-Cookbook.md
+#                http://www.rubydoc.info/github/Homebrew/brew/master/Formula
+# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 
-class Harminv < Formula
-  desc "Harminv solves the problem of harmonic inversion."
-  homepage "http://ab-initio.mit.edu/wiki/index.php/Harminv"
-  url "https://github.com/stevengj/harminv/archive/1.4.tar.gz"
-  version "1.4"
+class LibctlMeep < Formula
+  desc "Guile-based library for supporting flexible control files in scientific simulations"
+  homepage "http://ab-initio.mit.edu/wiki/index.php/Libctl"
+  url "http://ab-initio.mit.edu/libctl/libctl-3.2.2.tar.gz"
+  head "https://github.com/stevengj/libctl.git"
   sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
-  head "https://github.com/stevengj/harminv.git"
+  version "3.2.2"
 
   fails_with :clang
   fails_with :gcc => "4.6" do
@@ -21,7 +23,6 @@ class Harminv < Formula
   depends_on "gettext" => :build
 
   depends_on :fortran
-  depends_on "openblas" => :optional
   
   def install
     conf_args = [
@@ -32,22 +33,14 @@ class Harminv < Formula
         "--prefix=#{prefix}"
       ]
   
-    # openblas is keg-only. We need to link to it if installed  
-    if build.with? "openblas"
-      conf_args << "--with-blas=#{Formula["openblas"].opt_prefix}"
-      conf_args << "--with-lapack=#{Formula["openblas"].opt_prefix}"
-    elsif OS.mac?
-      # otherwise, libblas and liblapack should be detected from Accelerator framework
-    end
-    
     ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
     ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
 
-    if build.head?
+#    if build.head?
       system "./autogen.sh"
-    else
-      system "autoreconf", "-fiv"
-    end
+#    else
+#      system "autoreconf", "-fiv"
+#    end
     system "./configure", *conf_args
 
     system "make"

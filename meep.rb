@@ -6,6 +6,11 @@ class Meep < Formula
   sha256 "562e070a60ca1a0cf0a1e89c07ad2ca40e21b14a7f4ac9c5b7b5e0100cbda714"
   head "https://github.com/stevengj/meep.git"
   
+  fails_with :clang
+  fails_with :gcc => "4.6" do
+    cause "The only supported compiler is GCC(>=4.7)."
+  end
+
   depends_on :fortran
   depends_on :mpi => [:cc, :recommended]
 
@@ -27,7 +32,7 @@ class Meep < Formula
   depends_on "hdf5" => mpi_args
   depends_on "fftw" => mpi_args
   depends_on "harminv"
-  depends_on "libctl" => :recommended
+  depends_on "libctl-meep" => :recommended
   depends_on "mpb"
   depends_on "openblas" => :optional
 
@@ -64,7 +69,7 @@ class Meep < Formula
     end
 
     if build.with? "libctl"    
-      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl"
+      conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl-meep"
     else
       conf_args << "--without-libctl"
     end
