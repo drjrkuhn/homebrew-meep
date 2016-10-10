@@ -3,12 +3,15 @@ class Meep < Formula
   homepage "http://ab-initio.mit.edu/meep/"
   url "https://github.com/stevengj/meep/archive/1.3.tar.gz"
   version "1.3"
-  sha256 "562e070a60ca1a0cf0a1e89c07ad2ca40e21b14a7f4ac9c5b7b5e0100cbda714"
+  sha256 "564c1ff1b413a3487cf81048a45deabfdac4243a1a37ce743f4fcf0c055fd438"
   head "https://github.com/stevengj/meep.git"
   
-  fails_with :clang
-  fails_with :gcc => "4.6" do
-    cause "The only supported compiler is GCC(>=4.7)."
+  option "with-gnu", "force compilation with gnu compiler rather than clang"
+  if build.with? "gcc"
+    fails_with :clang
+    fails_with :gcc => "4.6" do
+      cause "The only supported compiler is GCC(>=4.7)."
+    end
   end
 
   depends_on :fortran
@@ -68,7 +71,7 @@ class Meep < Formula
       # otherwise, libblas and liblapack should be detected from Accelerator framework
     end
 
-    if build.with? "libctl"    
+    if build.with? "libctl-meep"    
       conf_args << "--with-libctl=#{HOMEBREW_PREFIX}/share/libctl-meep"
     else
       conf_args << "--without-libctl"
@@ -88,6 +91,8 @@ class Meep < Formula
   
     system "make"
     system "make", "install" # if this fails, try separate make/make install steps
+    bin.install_symlink "meep-mpi" => "meep" if build.with? "mpi"
+
     if build.with? "check"
       ohai "Testing Meep. This could take several minutes."
       ohai "Install using --without-check to skip tests."
@@ -95,7 +100,6 @@ class Meep < Formula
       system "make", "check"
       ohai "Testing done."
     end
-    bin.install_symlink "meep-mpi" => "meep" if build.with? "mpi"
   end
 
   test do

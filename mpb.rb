@@ -8,9 +8,12 @@ class Mpb < Formula
   sha256 "3deafe79185eb9eb8a8fe97d9fe51624221f51c1cf4baff4b4a7242c51130bd7"
   head "https://github.com/stevengj/mpb.git"
 
-  fails_with :clang
-  fails_with :gcc => "4.6" do
-    cause "The only supported compiler is GCC(>=4.7)."
+  option "with-gnu", "force compilation with gnu compiler rather than clang"
+  if build.with? "gcc"
+    fails_with :clang
+    fails_with :gcc => "4.6" do
+      cause "The only supported compiler is GCC(>=4.7)."
+    end
   end
 
   depends_on :fortran
@@ -26,9 +29,12 @@ class Mpb < Formula
   option "with-inv-symmetry", "take advantage of (and require) inv. sym."
   option "with-hermitian-eps", "allow complex-Hermitian dielectric tensors"
   
-  depends_on "fftw"
+  mpi_args = [:recommended]
+  mpi_args << "with-mpi" if build.with? "mpi"
+
+  depends_on "fftw" => mpi_args
   depends_on "libctl-meep" => :recommended
-  depends_on "hdf5"
+  depends_on "hdf5" => mpi_args
   depends_on "openblas" => :optional
 
   def install

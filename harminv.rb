@@ -7,10 +7,13 @@ class Harminv < Formula
   version "1.4"
   sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
   head "https://github.com/stevengj/harminv.git"
-
-  fails_with :clang
-  fails_with :gcc => "4.6" do
-    cause "The only supported compiler is GCC(>=4.7)."
+  
+  option "with-gnu", "force compilation with gnu compiler rather than clang"
+  if build.with? "gcc"
+    fails_with :clang
+    fails_with :gcc => "4.6" do
+      cause "The only supported compiler is GCC(>=4.7)."
+    end
   end
 
   option "without-check", "Disable build-time checking (not recommended)"

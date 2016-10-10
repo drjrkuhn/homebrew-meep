@@ -6,13 +6,16 @@ class LibctlMeep < Formula
   desc "Guile-based library for supporting flexible control files in scientific simulations"
   homepage "http://ab-initio.mit.edu/wiki/index.php/Libctl"
   url "http://ab-initio.mit.edu/libctl/libctl-3.2.2.tar.gz"
-  head "https://github.com/stevengj/libctl.git"
-  sha256 "3ea1b7727a163db7c86add2144d56822b659be43ee5d96ca559e071861760fb8"
+  sha256 "8abd8b58bc60e84e16d25b56f71020e0cb24d75b28bc5db86d50028197c7efbc"
   version "3.2.2"
+  head "https://github.com/stevengj/libctl.git"
 
-  fails_with :clang
-  fails_with :gcc => "4.6" do
-    cause "The only supported compiler is GCC(>=4.7)."
+  option "with-gnu", "force compilation with gnu compiler rather than clang"
+  if build.with? "gcc"
+    fails_with :clang
+    fails_with :gcc => "4.6" do
+      cause "The only supported compiler is GCC(>=4.7)."
+    end
   end
 
   option "without-check", "Disable build-time checking (not recommended)"
@@ -36,11 +39,11 @@ class LibctlMeep < Formula
     ENV.append "CPLUS_INCLUDE_PATH", "#{HOMEBREW_PREFIX}/include"
     ENV.append "LIBRARY_PATH", "#{HOMEBREW_PREFIX}/lib"
 
-#    if build.head?
+    if build.head?
       system "./autogen.sh"
-#    else
-#      system "autoreconf", "-fiv"
-#    end
+    else
+      system "autoreconf", "-fiv"
+    end
     system "./configure", *conf_args
 
     system "make"
